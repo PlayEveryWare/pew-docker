@@ -1,0 +1,33 @@
+name: Make Visual Studio 2019 image
+
+on: workflow_dispatch
+
+jobs:
+  build-and-push:
+    name: Build and push image
+    runs-on: [self-hosted, windows]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          set-safe-directory: false
+
+      - name: Login to container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and tag container
+        run: |
+          copy builder\premake5.exe builder\vs2019
+          docker build builder\vs2019 `
+            -t ghcr.io/playeveryware/builder:vs2019
+
+      - name: 
+        run: |
+          docker push ghcr.io/playeveryware/builder:vs2019
