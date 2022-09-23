@@ -19,7 +19,7 @@ runs:
   using: "composite"
   steps:
     - name: Login to the container registry
-      using: docker/login-action@v2
+      uses: docker/login-action@v2
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
