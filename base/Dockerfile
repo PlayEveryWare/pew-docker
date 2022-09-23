@@ -1,7 +1,7 @@
 # Use this windows image as a source of our opengl DLLs
 FROM mcr.microsoft.com/windows:1809 as windows
 
-FROM mcr.microsoft.com/windows/servercore:ltsc2019
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
 LABEL org.opencontainers.image.authors="Matthew Endsley (mendsley@gmail.com)"
 
 # Install chocolately
