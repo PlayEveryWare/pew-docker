@@ -31,7 +31,7 @@ runs:
         docker build `
           --build-arg UNITY_VERSION=${{ inputs.version }} `
           --build-arg UNITY_CHANGESET=${{ inputs.changeset }} `
-          ${{ input.path }}unity `
+          ${{ inputs.path }}unity `
           -t ghcr.io/playeveryware/unity:${{ inputs.version }}
 
     - name: Push image to registry
