@@ -1,4 +1,4 @@
-FROM ghcr.io/playeveryware/base:1.0
+FROM ghcr.io/playeveryware/base:1.1
 
 RUN choco install --no-progress -y visualstudio2022community
 RUN choco install --no-progress -y visualstudio2022-workload-nativedesktop

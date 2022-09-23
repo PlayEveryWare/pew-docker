@@ -1,4 +1,4 @@
-FROM ghcr.io/playeveryware/base:1.0
+FROM ghcr.io/playeveryware/base:1.1
 LABEL org.opencontainers.image.authors="Matthew Endsley (mendsley@gmail.com)"
 
 # Install unity-hub
