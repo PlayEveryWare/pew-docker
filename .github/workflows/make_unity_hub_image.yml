@@ -1,0 +1,31 @@
+name: Build Unity Hub image
+
+on: workflow_dispatch
+
+jobs:
+  build-and-push:
+    runs-on: [self-hosted, windows]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          set-safe-directory: false
+
+      - name: Login to container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and tag image
+        run: |
+          docker build unity-hub `
+            -t ghcr.io/playeveryware/unity-hub:latest
+
+      - name: Push image to registry
+        run: |
+          docker push ghcr.io/playeveryware/unity-hub:latest
