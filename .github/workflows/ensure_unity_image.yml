@@ -7,6 +7,14 @@ on:
         description: Version of Unity for which an image is needed
         required: true
         type: string
+      get_org_token:
+        description: >
+          Attempt to acquire a PEW organization token for package registry. This only
+          works for repositories owned by PlayEveryWare and has the benefit of publishing
+          the package as the PEW Builder Application instead of a private repository name
+        required: false
+        default: true
+        type: boolean
 
 jobs:
   create-image-if-needed:
@@ -75,13 +83,26 @@ jobs:
           path: pew-docker
           set-safe-directory: false
 
+      - name: Acquire registry token
+        id: registry-token
+        if: steps.image-exists.outputs.need_image > 0
+        run: |
+          $token = ${{ secrets.GITHUB_TOKEN }}
+          if ( "${{ inputs.get_org_token }}" -eq "true" ) {
+            echo "::error::Not implemented")
+            exit 1
+          }
+
+          echo ( "::add-mask::" + $token )
+          echo ( "::set-output name=token::" + $token )
+
       - name: Login to container registry
         if: steps.image-exists.outputs.need_image > 0
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ steps.registry-token.outputs.token }}
 
       - name: Build image for Unity ${{ inputs.version }} (changeset ${{ steps.changeset.outputs.changeset }})
         if: steps.image-exists.outputs.need_image > 0
