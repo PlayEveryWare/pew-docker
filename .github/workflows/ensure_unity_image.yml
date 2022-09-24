@@ -1,0 +1,100 @@
+name: Ensure an image for the specified version of Unity exists
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Version of Unity for which an image is needed
+        required: true
+        type: string
+
+jobs:
+  create-image-if-needed:
+    name: Ensure image for Unity ${{ inputs.version }} exists
+    runs-on: [self-hosted]
+    steps:
+      - name: Locate an existing image
+        id: image-exists
+        shell: powershell
+        run: |
+          $result = (Invoke-WebRequest `
+              -UseBasicParsing `
+              -Header @{ `
+                'Accept' = 'application/vnd.github+json'; `
+                'Authorization' = 'Bearer ${{ secrets.GITHUB_TOKEN }}' `
+              } `
+              -Uri https://api.github.com/orgs/PlayEveryWare/packages/container/unity/versions `
+              | ConvertFrom-Json)
+          if (!$result) {
+            echo "::error::Failed to parse existing unity image versions"
+            exit 1
+          }
+
+          $foundImage=0
+          ForEach ($image in $result) {
+            ForEach ($tag in $image.metadata.container.tags) {
+              echo ( "Found image " + $tag )
+              if ( $tag -eq "${{ inputs.version }}" ) {
+                echo "Found matching image"
+                Set-Variable -Name 'foundImage' -Value 1
+              }
+            }
+          }
+
+          echo ( "foundImage: " + $foundImage )
+
+          if ($foundImage -eq 0) {
+            echo "::set-output name=need_image::1"
+          } else {
+            echo "::notice::Found existing image for Unity ${{ inputs.version }}"
+            echo "::set-output name=need_image::0"
+          }
+
+      - name: Get changeset for Unity ${{ inputs.version }}
+        id: changeset
+        if: steps.image-exists.outputs.need_image > 0
+        shell: powershell
+        run: |
+          $match = (Invoke-WebRequest -UseBasicParsing `
+            -Uri "https://unity3d.com/get-unity/download/archive" `
+            | Select-String 'unityhub://${{ inputs.version }}/([^"]*)')
+          if (!$match) {
+            echo "::error::Could not determine Unity changeset number for version ${{ inputs.version }}"
+            exit 1
+          }
+
+          $changeset = $match.matches.groups[1].value
+          echo ( "::notice::Found changeset " + $changeset + " for Unity version ${{ inputs.version }}" )
+          echo ( "::set-output name=changeset::" + $changeset )
+
+      - name: Checkout repository
+        if: steps.image-exists.outputs.need_image > 0
+        uses: actions/checkout@v3
+        with:
+          repository: PlayEveryWare/pew-docker
+          path: pew-docker
+          set-safe-directory: false
+
+      - name: Login to container registry
+        if: steps.image-exists.outputs.need_image > 0
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image for Unity ${{ inputs.version }} (changeset ${{ steps.changeset.outputs.changeset }})
+        if: steps.image-exists.outputs.need_image > 0
+        shell: powershell
+        run: |
+          docker build `
+            --build-arg UNITY_VERSION=${{ inputs.version }} `
+            --build-arg UNITY_CHANGESET=${{ steps.changeset.outputs.changeset }} `
+            pew-docker/unity `
+            -t ghcr.io/playeveryware/unity:${{ inputs.version }}
+
+      - name: Push Unity ${{ inputs.version }} image to registry
+        if: steps.image-exists.outputs.need_image > 0
+        shell: powershell
+        run: |
+          docker push ghcr.io/playeveryware/unity:${{ inputs.version }}
