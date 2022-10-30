@@ -4,14 +4,14 @@ SHELL ["cmd", "/c"]
 
 ARG UNITY_VERSION
 ARG UNITY_CHANGESET
-RUN cmd /c echo Installing unity version %UNITY_VERSION% with changeset %UNITY_CHANGESET%
+RUN echo "Installing unity version $ENV:UNITY_VERSION with changeset $ENV:UNITY_CHANGESET"
 RUN "C:\Program Files\Unity Hub\Unity Hub.exe" -- \
 	--headless install \
-	--version %UNITY_VERSION% \
-	--changeset %UNITY_CHANGESET% \
-	& if %ERRORLEVEL% EQU 1 exit 0
+	--version $ENV:UNITY_VERSION \
+	--changeset $ENV:UNITY_CHANGESET \
+	&& if ( $LastExitCode -eq 1 ) { exit 0 }
 
-RUN move "C:\Program Files\Unity\Hub\Editor\%UNITY_VERSION%" C:\Unity
+RUN move "C:\Program Files\Unity\Hub\Editor\$ENV:UNITY_VERSION" C:\Unity
 
 FROM ghcr.io/playeveryware/builder:vs2019
 LABEL org.opencontainers.image.authors="Matthew Endsley (mendsley@gmail.com)"
@@ -19,6 +19,6 @@ LABEL org.opencontainers.image.authors="Matthew Endsley (mendsley@gmail.com)"
 COPY --from=hub "C:\Unity" "C:\Unity"
 
 # Unity won't enable licensing without these services T__T
-RUN powershell -Command Set-Service nlasvc -StartupType Automatic
-RUN powershell -Command Set-Service netprofm -StartupType Automatic
+RUN Set-Service nlasvc -StartupType Automatic
+RUN Set-Service netprofm -StartupType Automatic
 
