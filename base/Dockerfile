@@ -11,10 +11,12 @@ RUN Set-ExecutionPolicy Bypass -Scope Process -Force; \
 	iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
 # Install dependencies
+RUN Set-Service -Name wuauserv -StartupType Manual
 RUN choco install --no-progress -y \
 	git \
 	vcredist2010 \
-	msvisualcplusplus2013-redist
+	msvisualcplusplus2013-redist \
+	dotnet3.5
 
 COPY --from=windows \
 		c:/windows/system32/glu32.dll \
