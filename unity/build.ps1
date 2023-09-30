@@ -11,4 +11,18 @@ if ( $LastExitCode -eq 1 ) {
     exit 0
 }
 
+# Install Android modules
+Start-Process `
+    -FilePath "C:\Program Files\Unity Hub\Unity Hub.exe" `
+    -ArgumentList @( `
+        "--"; `
+        "--headless install-modules"; `
+        "--version $ENV:UNITY_VERSION"; `
+        "-m android" `
+    ) `
+    -Wait
+if ( $LastExitCode -eq 1 ) {
+    exit 0
+}
+
 move "C:\Program Files\Unity\Hub\Editor\$ENV:UNITY_VERSION" C:\Unity
