@@ -17,6 +17,8 @@ RUN choco install --no-progress -y \
 	vcredist2010 \
 	msvisualcplusplus2013-redist \
 	dotnet3.5
+RUN Install-PackageProvider nuget -force
+RUN Install-Module -Confirm PowerHTML
 
 COPY --from=windows \
 		c:/windows/system32/glu32.dll \
